@@ -7,12 +7,14 @@
 
 use sfml::graphics::{Color, RenderTarget, RenderWindow};
 use sfml::window::{ContextSettings, Event, Key, VideoMode};
+use graphable::GraphableFn;
 use primitive::Vec2;
 
 /// Abstracted type representing the graphing window
 /// and any low-level state associated with it.
 pub struct Context {
     inner: RenderWindow,
+    figures: Vec<Box<dyn GraphableFn>>,
 }
 
 impl Context {
@@ -38,9 +40,15 @@ impl Context {
 
         Context {
             inner,
+            figures: Vec::new(),
         }
     }
 
+    /// Execute one frame of the main loop.
+    /// Redrawing and event handling are performed.
+    /// # Return value
+    /// Returns ``true`` if the simulation should continue
+    /// or ``false`` if the user wants to quit.
     pub fn tick(&mut self) -> bool {
         let mut running = true;
 
@@ -59,5 +67,19 @@ impl Context {
         self.inner.display();
 
         running
+    }
+
+    /// Add a figure, represented by a ``GraphableFn``,
+    /// to the graph. The figure will be retained indefinately.
+    /// Calls to this function can be very expensive,
+    /// as the function will be evaluated for all
+    /// visible x values.
+    pub fn add_figure(&mut self, figure: Box<dyn GraphableFn>) {
+        for i in 0..self.inner.size().x {
+            let i = i as f32;
+            println!("({}, {})", i, figure.evaluate(i));
+        }
+
+        self.figures.push(figure)
     }
 }
