@@ -6,15 +6,19 @@
 //! drawing systems.
 
 use sfml::graphics::{Color, RenderTarget, RenderWindow};
+use sfml::system::Vector2u;
 use sfml::window::{ContextSettings, Event, Key, VideoMode};
 use graphable::GraphableFn;
 use primitive::Vec2;
+use renderer::RenderCache;
+
+const STRETCH: (f32, f32) = (0.01, 100.);
 
 /// Abstracted type representing the graphing window
 /// and any low-level state associated with it.
 pub struct Context {
     inner: RenderWindow,
-    figures: Vec<Box<dyn GraphableFn>>,
+    figures: Vec<(Box<dyn GraphableFn>, RenderCache)>,
 }
 
 impl Context {
@@ -64,22 +68,32 @@ impl Context {
         }
 
         self.inner.clear(&Color::WHITE);
+        self.test();
         self.inner.display();
 
         running
     }
 
     /// Add a figure, represented by a ``GraphableFn``,
-    /// to the graph. The figure will be retained indefinately.
+    /// to the graph. The figure will be retained for the
+    /// lifetime of the ``Context``.
     /// Calls to this function can be very expensive,
     /// as the function will be evaluated for all
     /// visible x values.
     pub fn add_figure(&mut self, figure: Box<dyn GraphableFn>) {
+        /*
         for i in 0..self.inner.size().x {
             let i = i as f32;
             println!("({}, {})", i, figure.evaluate(i));
         }
+        */
 
-        self.figures.push(figure)
+        let Vector2u { x: end, y: height } = self.inner.size();
+        let render_cache = RenderCache::render(&*figure, 0, end, STRETCH.0, STRETCH.1, height);
+        self.figures.push((figure, render_cache))
+    }
+
+    pub fn test(&mut self) {
+        self.inner.draw_vertex_array(self.figures[0].1.vtx_arr(), Default::default())
     }
 }
