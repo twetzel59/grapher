@@ -1,7 +1,7 @@
 //! This module provides a system for rendering
 //! graphable figures.
 
-use sfml::graphics::{Color, PrimitiveType, Vertex, VertexArray};
+use sfml::graphics::{PrimitiveType, Vertex, VertexArray};
 use graphable::GraphableFn;
 
 /// Stores a rendered figure that can be
@@ -29,9 +29,10 @@ impl RenderCache {
         let x_axis = win_height as f32 / 2.0;
         for i in beg..end {
             let x = i as f32;
-            let point = (x, x_axis - figure.evaluate(x * x_stretch) * y_stretch);
+            let (y, color) = figure.evaluate(x * x_stretch);
+            let point = (x, x_axis - y * y_stretch);
 
-            vtx_arr.append(&Vertex::with_pos_color(point, Color::BLACK));
+            vtx_arr.append(&Vertex::with_pos_color(point, color.into()));
         }
 
         RenderCache {
